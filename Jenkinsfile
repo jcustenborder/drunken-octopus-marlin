@@ -56,9 +56,11 @@ stage('build') {
 
     node {
         for (firmwareStash in firmwareStashes) {
+            sh "echo unstashing firmware '${builtFirmwareGlobs}'"
             unstash firmwareStash
         }
 
+        sh "echo looking for ${builtFirmwareGlobs}"
         firmwareFiles = findFiles(glob: builtFirmwareGlobs)
         sh "md5sum -b ${firmwareFiles.join(' ')} >> build/md5sums.txt"
         archiveArtifacts artifacts: "build/md5sums.txt", fingerprint: true
