@@ -4,6 +4,9 @@ def configs
 def parallelSteps = [:]
 def md5SumsStashes=[]
 def firmwareStashes=[]
+
+def builtFirmwareGlobs = "build/**/*.hex, build/**/*.bin, build/**/*.elf"
+
 node {
     stage('checkout') {
         deleteDir()
@@ -36,8 +39,8 @@ node {
                             unstash configurationName
                             docker.image(dockerImage).inside() {
                                 sh "./build-firmware.sh '${printer}' '${toolhead}'"
-                                archiveArtifacts artifacts: "build/**/*.hex, build/**/*.bin", fingerprint: true
-                                stash name: firmwareStash, includes: "build/**/*.hex, build/**/*.bin"
+                                archiveArtifacts artifacts: builtFirmwareGlobs, fingerprint: true
+                                stash name: firmwareStash, includes: builtFirmwareGlobs
                             }
                         }
                     }
@@ -56,7 +59,7 @@ stage('build') {
             unstash firmwareStash
         }
 
-        firmwareFiles = findFiles(glob: "build/**/*.hex, build/**/*.bin")
+        firmwareFiles = findFiles(glob: builtFirmwareGlobs)
         sh "md5sum -b ${firmwareFiles.join(' ')} >> build/md5sums.txt"
         archiveArtifacts artifacts: "build/md5sums.txt", fingerprint: true
     }
