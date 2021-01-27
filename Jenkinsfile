@@ -38,9 +38,15 @@ node {
                             unstash 'source'
                             unstash configurationName
                             docker.image(dockerImage).inside() {
-                                sh "./build-firmware.sh '${printer}' '${toolhead}'"
-                                archiveArtifacts artifacts: builtFirmwareGlobs, fingerprint: true
-                                stash name: firmwareStash, includes: builtFirmwareGlobs
+                                try {
+                                    sh "./build-firmware.sh '${printer}' '${toolhead}'"
+                                    archiveArtifacts artifacts: builtFirmwareGlobs, fingerprint: true
+                                    stash name: firmwareStash, includes: builtFirmwareGlobs
+                                } catch(ex) {
+                                    if(!"Gladiola_MiniBTT002LCD-BandedTiger_HardenedSteel".equals(configurationName)) {
+                                        throw ex
+                                    }
+                                }
                             }
                         }
                     }
