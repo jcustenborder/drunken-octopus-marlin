@@ -69,5 +69,11 @@ stage('build') {
         firmwareFiles = findFiles(glob: builtFirmwareGlobs)
         sh "md5sum -b ${firmwareFiles.join(' ')} >> build/md5sums.txt"
         archiveArtifacts artifacts: "build/md5sums.txt", fingerprint: true
+        sh "tar -czvf build.tar.gz build/"
+        def buildZipFileName = "build.zip"
+        withCredentials([string(credentialsId: 'drunken-octopus-release-credentials', variable: 'zip_password')]) {
+            sh "zip -P '${zip_password}' -9r ${buildZipFileName} build/"
+        }
+        archiveArtifacts artifacts: buildZipFileName, fingerprint: true
     }
 }
