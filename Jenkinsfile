@@ -2,10 +2,11 @@ def dockerImage = 'drunkenoctopus/drunken-octopus-build-image:latest'
 def configs
 
 def parallelSteps = [:]
-def md5SumsStashes=[]
-def firmwareStashes=[]
+def md5SumsStashes = []
+def firmwareStashes = []
 
 def builtFirmwareGlobs = "build/**/*.hex, build/**/*.bin, build/**/*.elf"
+def skipConfigurations = ["Gladiola_MiniBTT002LCD-BandedTiger_HardenedSteel"]
 
 node {
     stage('checkout') {
@@ -30,6 +31,10 @@ node {
                 def firmwareStash = "${printer}-${toolhead}-firmware"
                 firmwareStashes.add(firmwareStash)
 
+                if (skipConfigurations.contains(configurationName)) {
+                    continue;
+                }
+
                 stash name: configurationName, includes: "config/examples/**/${printer}/${toolhead}/*.h"
 
                 parallelSteps[configurationName] = {
@@ -38,15 +43,9 @@ node {
                             unstash 'source'
                             unstash configurationName
                             docker.image(dockerImage).inside() {
-                                try {
-                                    sh "./build-firmware.sh '${printer}' '${toolhead}'"
-                                    archiveArtifacts artifacts: builtFirmwareGlobs, fingerprint: true
-                                    stash name: firmwareStash, includes: builtFirmwareGlobs
-                                } catch(ex) {
-                                    if(!"Gladiola_MiniBTT002LCD-BandedTiger_HardenedSteel".equals(configurationName)) {
-                                        throw ex
-                                    }
-                                }
+                                sh "./build-firmware.sh '${printer}' '${toolhead}'"
+                                archiveArtifacts artifacts: builtFirmwareGlobs, fingerprint: true
+                                stash name: firmwareStash, includes: builtFirmwareGlobs
                             }
                         }
                     }
