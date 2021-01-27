@@ -45,7 +45,7 @@ node {
                             docker.image(dockerImage).inside() {
                                 sh "./build-firmware.sh '${printer}' '${toolhead}'"
                                 archiveArtifacts artifacts: builtFirmwareGlobs, fingerprint: true
-                                stash name: firmwareStash, includes: builtFirmwareGlobs
+                                stash allowEmptyArchive: true, name: firmwareStash, includes: builtFirmwareGlobs
                             }
                         }
                     }
